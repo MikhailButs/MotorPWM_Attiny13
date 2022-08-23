@@ -1,0 +1,98 @@
+#include <tiny13.h>
+#include <delay.h>
+
+// Declare your global variables here
+
+void main(void)
+{
+// Declare your local variables here
+
+// Crystal Oscillator division factor: 1
+#pragma optsize-
+CLKPR=0x80;
+CLKPR=0x00;
+#ifdef _OPTIMIZE_SIZE_
+#pragma optsize+
+#endif
+
+// Input/Output Ports initialization
+// Port B initialization
+// Func5=In Func4=In Func3=In Func2=In Func1=Out Func0=Out 
+// State5=T State4=P State3=P State2=P State1=0 State0=0 
+PORTB=0x1C;
+DDRB=0x03;
+
+// Timer/Counter 0 initialization
+// Clock source: System Clock
+// Clock value: 18,750 kHz
+// Mode: Fast PWM top=FFh
+// OC0A output: Non-Inverted PWM
+// OC0B output: Inverted PWM
+TCCR0A=0xB3;
+TCCR0B=0x03;
+TCNT0=0x00;
+OCR0A=0x00;
+OCR0B=0x00;
+
+// External Interrupt(s) initialization
+// INT0: Off
+// Interrupt on any change on pins PCINT0-5: Off
+GIMSK=0x00;
+MCUCR=0x00;
+
+// Timer/Counter 0 Interrupt(s) initialization
+TIMSK0=0x00;
+
+// Analog Comparator initialization
+// Analog Comparator: Off
+ACSR=0x80;
+ADCSRB=0x00;
+OCR0A=128;
+OCR0B=128;
+
+while (1)
+   {
+       // Place your code here
+       if (PINB.2==0) //Проверка состояния к-н пуск
+         {
+          TCCR0A=0xB3; //К-н пуск  нажата включаем двигатель
+          } 
+        while (PINB.3!=PINB.4)//Проверка состояния к-н плюс минус
+           {
+        
+       if (PINB.3==0) //если к-н минус нажата
+       {  
+        OCR0B=OCR0A;  //Выравниваем скважность выходов ШИМ
+        if (OCR0A!=51) //Пока мощность на двигателе больше 20%
+        {
+
+           
+             delay_ms(150);
+             OCR0A--; //Декремент пока мощность болше 20%
+
+          
+         }     
+        }
+       
+       if (PINB.4==0) //Если к-н плюс НАЖАТА
+        { 
+            OCR0B=OCR0A; //Выравниваем скважность выходов ШИМ
+            if (OCR0A!=0xFF) //Пока мощность меньше 100%
+            {
+
+                
+                 delay_ms(150);
+                 OCR0A++; //Инкремент пока мощность меньше 100%
+
+             
+            }
+         }
+
+      } 
+        if (PINB.2==1)//Проверка состояния к-н пуск
+         {
+          TCCR0A=0x00; //К-н пуск не нажата отключаем двигатель
+          } 
+
+      };
+}
